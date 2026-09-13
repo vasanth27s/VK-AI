@@ -36,15 +36,18 @@ JWT_SECRET = os.getenv(
 JWT_ALGORITHM = "HS256"
 
 
+# ============================================================
+# CHECK ENVIRONMENT VARIABLES
+# ============================================================
+
 if not MONGODB_URL:
     raise RuntimeError(
-        "MONGODB_URL is missing in backend/.env"
+        "MONGODB_URL is missing in backend/.env or Render Environment Variables"
     )
-
 
 if not GEMINI_API_KEY:
     raise RuntimeError(
-        "GEMINI_API_KEY is missing in backend/.env"
+        "GEMINI_API_KEY is missing in backend/.env or Render Environment Variables"
     )
 
 
@@ -71,13 +74,17 @@ app = FastAPI(
 )
 
 
+# ============================================================
+# CORS
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=[
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://vk-ai-gamma.vercel.app",
-]
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://vk-ai-gamma.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -113,7 +120,7 @@ class ProfilePictureUpdate(BaseModel):
 
 
 # ============================================================
-# AUTHENTICATION HELPERS
+# AUTHENTICATION
 # ============================================================
 
 def create_token(user_id: str):
@@ -135,14 +142,12 @@ def get_current_user(
 ):
 
     if not authorization:
-
         raise HTTPException(
             status_code=401,
             detail="Authentication required."
         )
 
     if not authorization.startswith("Bearer "):
-
         raise HTTPException(
             status_code=401,
             detail="Invalid authorization header."
@@ -161,18 +166,15 @@ def get_current_user(
         user_id = payload.get("sub")
 
         if not user_id:
-
             raise HTTPException(
                 status_code=401,
                 detail="Invalid token."
             )
 
         try:
-
             object_id = ObjectId(user_id)
 
         except Exception:
-
             raise HTTPException(
                 status_code=401,
                 detail="Invalid user ID."
@@ -185,7 +187,6 @@ def get_current_user(
         )
 
         if not user:
-
             raise HTTPException(
                 status_code=401,
                 detail="User not found."
@@ -212,7 +213,7 @@ def user_to_dict(user):
 
 
 # ============================================================
-# AUTH - SIGNUP
+# SIGNUP
 # ============================================================
 
 @app.post("/api/auth/signup")
@@ -223,14 +224,12 @@ def signup(body: SignupRequest):
     password = body.password
 
     if len(name) < 2:
-
         raise HTTPException(
             status_code=400,
             detail="Name must contain at least 2 characters."
         )
 
     if len(password) < 6:
-
         raise HTTPException(
             status_code=400,
             detail="Password must contain at least 6 characters."
@@ -243,7 +242,6 @@ def signup(body: SignupRequest):
     )
 
     if existing_user:
-
         raise HTTPException(
             status_code=409,
             detail="An account with this email already exists."
@@ -263,9 +261,7 @@ def signup(body: SignupRequest):
         "created_at": now,
     }
 
-    result = users_collection.insert_one(
-        user
-    )
+    result = users_collection.insert_one(user)
 
     user["_id"] = result.inserted_id
 
@@ -280,7 +276,7 @@ def signup(body: SignupRequest):
 
 
 # ============================================================
-# AUTH - LOGIN
+# LOGIN
 # ============================================================
 
 @app.post("/api/auth/login")
@@ -295,7 +291,6 @@ def login(body: LoginRequest):
     )
 
     if not user:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password."
@@ -307,7 +302,6 @@ def login(body: LoginRequest):
     )
 
     if not password_valid:
-
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password."
@@ -324,7 +318,7 @@ def login(body: LoginRequest):
 
 
 # ============================================================
-# AUTH - CURRENT USER
+# CURRENT USER
 # ============================================================
 
 @app.get("/api/auth/me")
@@ -363,14 +357,12 @@ def update_profile_picture(
             detail="Profile picture is required."
         )
 
-    # Accept only browser data URLs for this simple app.
     if not picture.startswith("data:image/"):
         raise HTTPException(
             status_code=400,
             detail="Invalid profile picture format."
         )
 
-    # Keep MongoDB user documents reasonably small.
     if len(picture) > 2_800_000:
         raise HTTPException(
             status_code=413,
@@ -378,7 +370,9 @@ def update_profile_picture(
         )
 
     users_collection.update_one(
-        {"_id": user["_id"]},
+        {
+            "_id": user["_id"]
+        },
         {
             "$set": {
                 "profile_picture": picture,
@@ -388,7 +382,9 @@ def update_profile_picture(
     )
 
     updated_user = users_collection.find_one(
-        {"_id": user["_id"]}
+        {
+            "_id": user["_id"]
+        }
     )
 
     return {
@@ -413,7 +409,6 @@ async def ask_gemini(
     )
 
     if thinking:
-
         system_prompt += (
             " Spend extra effort checking your answer "
             "before responding."
@@ -569,7 +564,7 @@ def get_object_id(chat_id: str):
 
 
 # ============================================================
-# ROOT
+# ROOT / HEALTH CHECK
 # ============================================================
 
 @app.get("/")
@@ -578,6 +573,14 @@ def root():
     return {
         "name": "AI Chat API",
         "status": "ok"
+    }
+
+
+@app.get("/health")
+def health():
+
+    return {
+        "status": "healthy"
     }
 
 
@@ -667,7 +670,6 @@ def get_chat(
     )
 
     if not chat:
-
         raise HTTPException(
             status_code=404,
             detail="Chat not found."
@@ -718,7 +720,6 @@ def delete_chat(
     )
 
     if not chat:
-
         raise HTTPException(
             status_code=404,
             detail="Chat not found."
@@ -761,7 +762,6 @@ async def send_message(
     content = body.content.strip()
 
     if not content:
-
         raise HTTPException(
             status_code=400,
             detail="Message cannot be empty."
@@ -779,7 +779,6 @@ async def send_message(
     )
 
     if not chat:
-
         raise HTTPException(
             status_code=404,
             detail="Chat not found."
