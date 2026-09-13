@@ -935,6 +935,9 @@ MIT License
 
 ---
 
+
+render :  uvicorn main:app --host 0.0.0.0 --port $PORT
+
 # ⭐ VK-AI
 
 Built with React, Python, MongoDB, and modern AI APIs.
