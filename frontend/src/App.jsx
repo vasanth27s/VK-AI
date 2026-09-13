@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./styles.css";
 import logo from "../image.png";
 
-const API = "http://127.0.0.1:8000";
+const API = "https://vk-ai-dozd.onrender.com";
 
 function SearchIcon({ size = 20 }) {
   return (
