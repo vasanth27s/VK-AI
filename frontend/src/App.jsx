@@ -737,6 +737,9 @@ function ChatPage({
   const [searchQuery, setSearchQuery] =
     useState("");
 
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false);
+
   const bottomRef =
     useRef(null);
 
@@ -1342,6 +1345,7 @@ function ChatPage({
     openChat(chatId);
     setSearchOpen(false);
     setSearchQuery("");
+    setMobileMenuOpen(false);
   }
 
   function handleKeyDown(event) {
@@ -1365,7 +1369,7 @@ function ChatPage({
           SIDEBAR
           ================================================== */}
 
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
 
         <div className="sidebar-brand">
 
@@ -1415,6 +1419,7 @@ function ChatPage({
           onClick={() => {
             setSearchOpen(false);
             setProfileOpen(false);
+            setMobileMenuOpen(false);
             createNewChat();
           }}
           style={{
@@ -1606,11 +1611,10 @@ function ChatPage({
                       : ""
                   }`
                 }
-                onClick={() =>
-                  openChat(
-                    chat.id
-                  )
-                }
+                onClick={() => {
+                  openChat(chat.id);
+                  setMobileMenuOpen(false);
+                }}
               >
 
                 <span>
@@ -1803,6 +1807,15 @@ function ChatPage({
 
       </aside>
 
+      {mobileMenuOpen && (
+        <button
+          type="button"
+          className="mobile-sidebar-overlay"
+          aria-label="Close menu"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* ==================================================
           MAIN CHAT
           ================================================== */}
@@ -1810,6 +1823,18 @@ function ChatPage({
       <main className="chat-main">
 
         <header className="chat-header">
+
+          <button
+            type="button"
+            className="mobile-menu-button"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((value) => !value)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
 
           <div className="chat-brand">
 
@@ -1856,8 +1881,11 @@ function ChatPage({
               </div>
 
               <h1>
-                What can I help you  
+                What can I help you <br/>
                 <span>
+                  {localUser?.name?.trim()
+                    ? `${localUser.name.trim()}?`
+                    : ""}
                 </span>
               </h1>
 
