@@ -1856,9 +1856,8 @@ function ChatPage({
               </div>
 
               <h1>
-                What can I help you
+                What can I help you  
                 <span>
-                  create?
                 </span>
               </h1>
 
